@@ -1,0 +1,11 @@
+# Runtime-only dependencies (no ultralytics/torch).
+# Use this on the deployment machine when backend/models/ already contains an
+# exported OpenVINO model - it saves ~2 GB of download and install time.
+fastapi
+uvicorn[standard]
+opencv-python-headless
+numpy
+# ByteTrack is deprecated in supervision and disappears in 0.31 - pin below it
+supervision<0.31
+openvino
+psutil

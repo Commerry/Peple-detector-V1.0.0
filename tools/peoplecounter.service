@@ -1,0 +1,22 @@
+[Unit]
+Description=Factory Box People Counter
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+Group=__USER__
+# render group is required to reach /dev/dri/renderD128 for iGPU inference
+SupplementaryGroups=render video
+WorkingDirectory=__DIR__/backend
+ExecStart=__DIR__/.venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=10
+# a camera that hangs must not take the box down
+MemoryMax=3G
+StandardOutput=append:__DIR__/data/server.log
+StandardError=append:__DIR__/data/server.log
+
+[Install]
+WantedBy=multi-user.target

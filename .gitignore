@@ -1,0 +1,23 @@
+.venv/
+.claude/
+__pycache__/
+node_modules/
+frontend/dist/
+backend/models/
+backend/yolo11n.pt
+
+# Runtime state and secrets. config.json holds the RTSP credentials and the
+# platform api_key, so only the example with placeholders is tracked.
+data/config.json
+data/people_counter.db*
+data/upload_queue.json
+data/upload_cursor.txt
+data/snapshots/
+data/demo_people.avi
+data/*.log
+data/*.csv
+data/*.bak*
+
+*.bak
+*.bak-*
+kernel.errors.txt

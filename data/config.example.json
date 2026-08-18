@@ -1,0 +1,60 @@
+{
+  "cameras": [
+    {
+      "id": 1,
+      "name": "Entrance",
+      "source": "rtsp://USER:PASSWORD@CAMERA-IP/Streaming/Channels/102",
+      "enabled": false,
+      "line": {
+        "x1": 0.5285062263946589,
+        "y1": 0.9622096027300121,
+        "x2": 0.7474344313600286,
+        "y2": 0.7571074697454185
+      },
+      "invert_direction": false,
+      "detect_every_n": 2,
+      "conf": 0.35,
+      "count_mode": "both"
+    },
+    {
+      "id": 2,
+      "name": "Exit",
+      "source": "rtsp://USER:PASSWORD@CAMERA-IP/Streaming/Channels/102",
+      "enabled": false,
+      "line": {
+        "x1": 0.5684150042431436,
+        "y1": 0.853566408246555,
+        "x2": 0.9,
+        "y2": 0.5
+      },
+      "invert_direction": false,
+      "detect_every_n": 3,
+      "conf": 0.35,
+      "count_mode": "both"
+    }
+  ],
+  "model": {
+    "imgsz": 320,
+    "device": "GPU.0"
+  },
+  "tracking": {
+    "lost_seconds": 3
+  },
+  "snapshots": {
+    "enabled": false,
+    "keep_days": 7
+  },
+  "jpeg_quality": 70,
+  "counting": {
+    "cooldown_s": 2,
+    "deadband_frac": 0.008,
+    "margin_frac": 0.15,
+    "min_track_age": 2
+  },
+  "upload": {
+    "api_key": "",
+    "api_keys": {},
+    "base_url": "http://FACTORYBOX-SERVER",
+    "enabled": false
+  }
+}

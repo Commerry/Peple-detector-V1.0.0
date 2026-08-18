@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+opencv-python
+numpy
+ultralytics
+supervision<0.31
+openvino
+psutil

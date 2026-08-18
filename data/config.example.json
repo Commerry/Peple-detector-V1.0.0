@@ -54,7 +54,7 @@
   "upload": {
     "api_key": "",
     "api_keys": {},
-    "base_url": "http://FACTORYBOX-SERVER",
+    "base_url": "https://dashboardapi.factoryboxx.com",
     "enabled": false
   }
 }

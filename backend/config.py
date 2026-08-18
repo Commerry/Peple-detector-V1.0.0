@@ -53,12 +53,16 @@ DEFAULT_CONFIG = {
     },
     "snapshots": {"enabled": True, "keep_days": 7},
     "jpeg_quality": 70,
-    # Push counts to the FactoryBox IoT platform (numbers only, no images)
+    # Push counts to the FactoryBox IoT platform (numbers only, no images).
+    # The address is the public API domain, not the server's LAN address: a
+    # station only reaches an IP while it sits on the same network as the
+    # server, and these move between sites.
     "upload": {
         "enabled": False,
-        "base_url": "http://10.1.100.200",
+        "base_url": "https://dashboardapi.factoryboxx.com",
         "interval_s": 60,
-        "api_keys": {},   # {"1": "fbx_...", "2": "fbx_..."}
+        "api_key": "",
+        "api_keys": {},   # legacy per-camera map; one key is used now
     },
 }
 

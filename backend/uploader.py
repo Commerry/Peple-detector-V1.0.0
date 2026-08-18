@@ -27,6 +27,13 @@ CURSOR_PATH = DATA_DIR / "upload_cursor.txt"   # last event id sent to the cloud
 MAX_QUEUE = 500          # ~2 days of 5-minute batches
 TIMEOUT = 15
 
+# The platform sits behind Cloudflare, which rejects urllib's default
+# "Python-urllib/3.x" outright with error 1010 -- no request ever reaches the
+# server, from any network. Any honest product name gets through, so the station
+# says who it is.
+USER_AGENT = "PeopleCounter/1.0 (+FactoryBox counting station)"
+HEADERS = {"Content-Type": "application/json", "User-Agent": USER_AGENT}
+
 
 def _utc_z() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
@@ -105,7 +112,7 @@ class Uploader(threading.Thread):
         req = urllib.request.Request(
             f"{base}/api/people-counter/events",
             data=json.dumps(body).encode(),
-            headers={"Content-Type": "application/json"},
+            headers=HEADERS,
             method="POST",
         )
         try:
@@ -131,7 +138,7 @@ class Uploader(threading.Thread):
         req = urllib.request.Request(
             f"{base}/api/data",
             data=json.dumps(payload).encode(),
-            headers={"Content-Type": "application/json"},
+            headers=HEADERS,
             method="POST",
         )
         try:

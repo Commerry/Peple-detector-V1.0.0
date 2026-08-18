@@ -65,6 +65,24 @@ class Uploader(threading.Thread):
         except (OSError, json.JSONDecodeError):
             return []
 
+    @staticmethod
+    def _collapse(pending: list) -> list:
+        """Keep the newest reading of each day and drop the rest.
+
+        These payloads are snapshots of counters that only climb until midnight,
+        and the platform stores a day as the highest value it saw, so an older
+        snapshot from the same day carries nothing the newer one does not. After
+        a long outage the queue holds hundreds of them, and replaying the lot in
+        order meant the dashboard spent a quarter of an hour showing this
+        morning's number before it caught up with the live one. One reading per
+        day keeps every day's figure and shows today's straight away.
+        """
+        newest: dict[str, dict] = {}
+        for item in pending:
+            stamp = str(item.get("timestamp", ""))[:10] or "unknown"
+            newest[stamp] = item          # later items overwrite earlier ones
+        return [newest[day] for day in sorted(newest)]
+
     def _save_queue(self, items: list) -> None:
         try:
             DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -182,7 +200,7 @@ class Uploader(threading.Thread):
 
     def run(self) -> None:
         interval = max(10, int(self.cfg.get("interval_s", 60)))
-        pending = self._load_queue()
+        pending = self._collapse(self._load_queue())
 
         while not self._stop.wait(interval):
             if not self.cfg.get("enabled"):
@@ -200,6 +218,10 @@ class Uploader(threading.Thread):
                     pending.append(self._payload(stats, key))
             except Exception as e:  # noqa: BLE001
                 self.last_error = f"stats: {e}"
+
+            # An outage leaves a pile of same-day snapshots behind; only the
+            # newest of each day says anything the platform will keep.
+            pending = self._collapse(pending)
 
             # drain oldest first; stop on the first retryable failure so
             # ordering holds, but discard anything the server will never accept

@@ -2,7 +2,6 @@
 .claude/
 __pycache__/
 node_modules/
-frontend/dist/
 backend/models/
 backend/yolo11n.pt
 
@@ -11,6 +10,7 @@ backend/yolo11n.pt
 data/config.json
 data/people_counter.db*
 data/upload_queue.json
+data/display_baseline.json
 data/upload_cursor.txt
 data/snapshots/
 data/demo_people.avi

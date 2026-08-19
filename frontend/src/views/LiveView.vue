@@ -106,6 +106,22 @@ function fmtTime(ts) {
 
 const refreshToken = ref(0)
 
+const resetting = ref(false)
+
+// Zero what the screens show. The database keeps every crossing, so history,
+// exports and the cloud log carry on as if nothing happened.
+async function resetCounters() {
+  if (!confirm('Reset the displayed counters to 0?\nHistory and exports keep everything.')) return
+  resetting.value = true
+  try {
+    await api.resetCounters()
+  } catch (err) {
+    alert(`Could not reset: ${err.message}`)
+  } finally {
+    resetting.value = false
+  }
+}
+
 function closeSettings() {
   showSettings.value = false
   // strip ?settings=1 so a page refresh doesn't reopen the modal
@@ -144,7 +160,14 @@ async function onSaved() {
           </option>
         </select>
       </label>
-      <button style="margin-left: auto" @click="showSettings = true">
+      <button style="margin-left: auto" :disabled="resetting" @click="resetCounters">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8" />
+          <path d="M3 3v5h5" />
+        </svg>
+        {{ resetting ? 'Resetting…' : 'Reset counter' }}
+      </button>
+      <button @click="showSettings = true">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3" />
           <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />

@@ -5,6 +5,7 @@ Run:  uvicorn main:app --host 0.0.0.0 --port 8000
 import asyncio
 import csv
 import io
+import json
 import os
 import shutil
 import threading
@@ -25,7 +26,7 @@ from fastapi.staticfiles import StaticFiles
 import database
 import xlsx_report
 from camera_worker import CameraWorker
-from config import SNAPSHOT_DIR, load_config, save_config
+from config import DATA_DIR, SNAPSHOT_DIR, load_config, save_config
 from uploader import Uploader
 
 app = FastAPI(title="People Counter")
@@ -248,6 +249,38 @@ def single_frame(cam_id: int):
 
 # ---------- stats / history ----------
 
+BASELINE_PATH = DATA_DIR / "display_baseline.json"
+
+
+def _load_baseline() -> dict:
+    """What was on the counters when someone last pressed Reset today.
+
+    The screens show counts measured from that moment; the database keeps every
+    crossing regardless, so history and exports are untouched. Yesterday's
+    baseline means nothing after the midnight rollover, hence the date check.
+    """
+    try:
+        raw = json.loads(BASELINE_PATH.read_text(encoding="utf-8"))
+        if raw.get("date") == date.today().isoformat():
+            return {int(k): v for k, v in raw.get("cameras", {}).items()}
+    except (OSError, ValueError, AttributeError):
+        pass
+    return {}
+
+
+def _apply_baseline(cams: list[dict]) -> None:
+    baseline = _load_baseline()
+    if not baseline:
+        return
+    for cam in cams:
+        base = baseline.get(cam["camera_id"])
+        if not base:
+            continue
+        cam["in"] = max(0, cam["in"] - int(base.get("in", 0)))
+        cam["out"] = max(0, cam["out"] - int(base.get("out", 0)))
+        cam["inside"] = max(0, cam["in"] - cam["out"])
+
+
 def _all_stats() -> dict:
     cfg = load_config()
     cams = []
@@ -269,6 +302,9 @@ def _all_stats() -> dict:
                 "inside": max(0, counts["IN"] - counts["OUT"]),
                 "error": None if cam.get("enabled") else "disabled",
             })
+    # Screens count from the last Reset press; the database keeps everything.
+    _apply_baseline(cams)
+
     # Site total: IN comes from the entrance camera, OUT from the exit camera.
     # Every display and the cloud upload use this one number, so they agree.
     site_cfg = cfg.get("site", {})
@@ -296,6 +332,36 @@ def _all_stats() -> dict:
 @app.get("/api/stats")
 def get_stats():
     return _all_stats()
+
+
+@app.post("/api/counters/reset")
+def reset_counters():
+    """Zero what the screens show, keep everything in the database.
+
+    The current raw totals become the day's baseline; every display counts on
+    from here. History, exports and the crossing log are untouched, and the
+    midnight rollover clears the baseline along with the day itself."""
+    cfg = load_config()
+    cameras: dict[str, dict] = {}
+    for cam in cfg["cameras"]:
+        cam_id = cam.get("id")
+        if not isinstance(cam_id, int):
+            continue
+        w = manager.get(cam_id)
+        if w:
+            raw = w.stats()
+            cameras[str(cam_id)] = {"in": raw["in"], "out": raw["out"]}
+        else:
+            counts = database.today_counts(cam_id)
+            cameras[str(cam_id)] = {"in": counts["IN"], "out": counts["OUT"]}
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    tmp = BASELINE_PATH.with_suffix(".json.tmp")
+    tmp.write_text(
+        json.dumps({"date": date.today().isoformat(), "cameras": cameras}),
+        encoding="utf-8",
+    )
+    os.replace(tmp, BASELINE_PATH)
+    return {"ok": True, "stats": _all_stats()}
 
 
 def _validate_config(cfg: dict) -> None:

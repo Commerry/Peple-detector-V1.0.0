@@ -29,6 +29,9 @@ export const api = {
     if (cameraId != null) p.set('camera_id', cameraId)
     return fetch(`/api/events/recent?${p}`).then(handle)
   },
+  // Zero the on-screen counters; the database keeps every crossing.
+  resetCounters: () => fetch('/api/counters/reset', { method: 'POST' }).then(handle),
+
   // `kind` picks the file: 'csv' for the raw rows, 'xlsx' for the report with
   // totals and bar charts drawn from its own cells.
   exportUrl: (dateFrom, dateTo, cameraId, kind = 'csv') => {
